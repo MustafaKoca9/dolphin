@@ -750,7 +750,7 @@ QPixmap KItemListView::createDragPixmap(const KItemSet &indexes) const
 void KItemListView::editRole(int index, const QByteArray &role)
 {
     KStandardItemListWidget *widget = qobject_cast<KStandardItemListWidget *>(m_visibleItems.value(index));
-    if (!widget || m_editingRole) {
+    if (!widget || m_editingRole || m_animation->isStarted(widget)) {
         return;
     }
 
