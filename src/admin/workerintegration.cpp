@@ -19,6 +19,7 @@
 #include <KProtocolInfo>
 
 #include <QAction>
+#include <QPointer> // **ÖNERİ 1: QPointer için başlık dosyası eklendi**
 
 #include <iostream>
 
@@ -105,7 +106,8 @@ QString Admin::warningMessage()
 namespace
 {
 /** The only WorkerIntegration object that is ever constructed. It is only ever accessed directly from within this file. */
-WorkerIntegration *instance = nullptr;
+// **ÖNERİ 1: Dangling pointer riskini önlemek için QPointer kullanıldı.**
+QPointer<WorkerIntegration> instance = nullptr;
 }
 
 WorkerIntegration::WorkerIntegration(DolphinMainWindow *parent, QAction *actAsAdminAction)
@@ -138,6 +140,9 @@ void WorkerIntegration::createActAsAdminAction(KActionCollection *actionCollecti
 
 QAction *WorkerIntegration::FriendAccess::actAsAdminAction()
 {
+    // **ÖNERİ 2: 'instance'ın oluşturulduğundan emin olmak için güvenlik kontrolü eklendi.**
+    // Bu, yanlış kullanımda tanılaması zor çökmeler yerine net bir hata mesajı sağlar.
+    Q_CHECK_PTR(instance);
     return instance->m_actAsAdminAction;
 }
 
@@ -164,7 +169,11 @@ void WorkerIntegration::toggleActAsAdmin()
                                  KStandardGuiItem::cancel());
         warningDialog.setDontAskAgainText(i18nc("@option:check", "Do not warn me about these risks again"));
 
-        risksAccepted = warningDialog.exec() != 4 /* Cancel */;
+        // **ÖNERİ 3: "Sihirli sayı" kullanımı yerine isimlendirilmiş sabit kullanıldı.**
+        // KMessageDialog için 'Cancel' butonunun standart dönüş kodunu temsil eder.
+        constexpr int CancelButtonCode = 4;
+        risksAccepted = warningDialog.exec() != CancelButtonCode;
+
         if (warningDialog.isDontAskAgainChecked()) {
             KMessageBox::saveDontShowAgainContinue(warningDontShowAgainName);
         }
